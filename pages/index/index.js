@@ -1,54 +1,84 @@
-//index.js
-//获取应用实例
-const app = getApp()
+//logs.js
+const util = require('../../utils/util.js')
 
 Page({
   data: {
-    motto: 'Hello World',
-    userInfo: {},
-    hasUserInfo: false,
-    canIUse: wx.canIUse('button.open-type.getUserInfo')
+    dataList: [
+      
+    ]
   },
-  //事件处理函数
-  bindViewTap: function() {
-    wx.navigateTo({
-      url: '../logs/logs'
+  listPage: {
+    pageSize: 20,
+    totalPage: 0,
+    curpage: 1
+  }, 
+  getList: function (options){
+    wx.showLoading({
+      title: 'loading'
+    })
+    var that = this
+    console.log('that.listPage.curpage：' + that.listPage.curpage)
+    var listUrl = util.apiUrl+'hefei/list?page=' + that.listPage.curpage
+    wx.request({
+      url: listUrl, //仅为示例，并非真实的接口地址
+      header: {
+        'content-type': 'application/json' // 默认值
+      },
+      success: function (res) {
+        that.listPage.totalPage = res.data.total_page
+        res.data.data.forEach(function (value, index, array){
+          let dateFormat = util.formatDate(new Date(value.replyDate*1000))
+          value.replyDate = dateFormat
+        })
+        let dataArr = that.data.dataList
+        if (that.listPage.curpage == 1){
+          dataArr = []
+        }
+        dataArr = dataArr.concat(res.data.data)
+        that.setData({ dataList:dataArr})
+        wx.hideLoading()
+      },
+      fail: function (res) {
+        //app.loadFail()
+        console.log(res)
+        wx.hideLoading()
+      }
     })
   },
-  onLoad: function () {
-    if (app.globalData.userInfo) {
-      this.setData({
-        userInfo: app.globalData.userInfo,
-        hasUserInfo: true
-      })
-    } else if (this.data.canIUse){
-      // 由于 getUserInfo 是网络请求，可能会在 Page.onLoad 之后才返回
-      // 所以此处加入 callback 以防止这种情况
-      app.userInfoReadyCallback = res => {
-        this.setData({
-          userInfo: res.userInfo,
-          hasUserInfo: true
-        })
-      }
-    } else {
-      // 在没有 open-type=getUserInfo 版本的兼容处理
-      wx.getUserInfo({
-        success: res => {
-          app.globalData.userInfo = res.userInfo
-          this.setData({
-            userInfo: res.userInfo,
-            hasUserInfo: true
-          })
-        }
-      })
+  onItemTap: function (e) {
+    console.log(e)
+    var item = e.currentTarget.dataset.item
+    var cardId = item.cardId
+    wx.navigateTo({
+      url: '../detail/detail?cardId=' + cardId
+    })
+  },
+  onLoad: function (options) {
+    this.getList(options)
+    this.GloOption = options
+  },
+  GloOption: null,
+  onShareAppMessage: function (res) {
+    if (res.from === 'button') {
+      // 来自页面内转发按钮
+      console.log(res.target)
+    }
+    return {
+      title: '坊间之声',
+      path: '/logs/logs'
     }
   },
-  getUserInfo: function(e) {
-    console.log(e)
-    app.globalData.userInfo = e.detail.userInfo
-    this.setData({
-      userInfo: e.detail.userInfo,
-      hasUserInfo: true
-    })
-  }
+  onPullDownRefresh: function () {
+    this.data.dataList = []
+    this.listPage.curpage = 1
+    this.getList(this.GloOption);
+    wx.stopPullDownRefresh()
+  },
+  onReachBottom: function () {
+    var that = this
+    if (that.listPage.totalPage > that.listPage.curpage * that.listPage.pageSize) {
+      that.listPage.curpage++
+      this.getList(that.GloOption)
+    }
+  },
 })

@@ -1,13 +1,13 @@
-<!--index.wxml-->
-<view class="container">
-  <view class="userinfo">
-    <button wx:if="{{!hasUserInfo && canIUse}}" open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button>
-    <block wx:else>
-      <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
-      <text class="userinfo-nickname">{{userInfo.nickName}}</text>
-    </block>
+<!--logs.wxml-->
+<view class="container list">
+  <view class="hcontainer">
+    <view class="header">信件列表</view>
   </view>
-  <view class="usermotto">
-    <text class="user-motto">{{motto}}</text>
+  <view wx:for="{{dataList}}" wx:key="cardId" class="item" bindtap='onItemTap' data-item="{{item}}">
+    <text class="title"> {{item.title}}: </text>
+    <view class="subTitle">
+      <text class="reply">回复单位：{{item.reply}}</text>
+      <text class="replyDate">回复时间：{{item.replyDate}}</text>
+    </view>
   </view>
 </view>
